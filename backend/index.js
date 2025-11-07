@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connection from './db.js';
 import alumnosRoutes from './routes/alumnos.js';
+import materiasRoutes from './routes/materias.js';
 
 dotenv.config();
 
@@ -21,3 +22,5 @@ app.listen(PORT, () => {
 });
 
 app.use('/api/alumnos', alumnosRoutes);
+
+app.use('/api/materias', materiasRoutes);
