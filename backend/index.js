@@ -5,6 +5,7 @@ import connection from './db.js';
 import alumnosRoutes from './routes/alumnos.js';
 import materiasRoutes from './routes/materias.js';
 import notasRoutes from './routes/notas.js';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/alumnos', alumnosRoutes);
 app.use('/api/materias', materiasRoutes);
 app.use('/api/notas', notasRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/api/ping', (req, res) => {
   res.send('Servidor funcionando y conectado a MySQL');
