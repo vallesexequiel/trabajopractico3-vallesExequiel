@@ -1,36 +1,38 @@
-import { Router } from 'express';
+import express from 'express';
 import connection from '../db.js';
+import { verifyToken } from '../middleware/verifyToken.js';
 
-const router = Router();
+const router = express.Router();
 
-// 🧾 Listar todos los alumnos
-router.get('/', (req, res) => {
-  connection.query('SELECT * FROM alumnos', (err, results) => {
-    if (err) {
-      console.error('❌ Error al obtener alumnos:', err);
-      return res.status(500).json({ error: 'Error al obtener alumnos' });
-    }
-    res.json(results);
-  });
+// 🧾 Listar todos los alumnos (protegido con JWT)
+router.get('/', verifyToken, async (req, res) => {
+  console.log('📥 Se recibió solicitud a /api/alumnos');
+  try {
+    const [rows] = await connection.query('SELECT * FROM alumnos');
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Error al obtener alumnos:', err);
+    res.status(500).json({ error: 'Error al obtener alumnos' });
+  }
 });
 
 // 🔍 Buscar alumno por ID
-router.get('/:id', (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
-  connection.query('SELECT * FROM alumnos WHERE id = ?', [id], (err, results) => {
-    if (err) {
-      console.error('❌ Error al obtener alumno por ID:', err);
-      return res.status(500).json({ error: 'Error al obtener alumno' });
-    }
-    if (results.length === 0) {
+  try {
+    const [rows] = await connection.query('SELECT * FROM alumnos WHERE id = ?', [id]);
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Alumno no encontrado' });
     }
-    res.json(results[0]);
-  });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('❌ Error al obtener alumno por ID:', err);
+    res.status(500).json({ error: 'Error al obtener alumno' });
+  }
 });
 
 // 📚 Obtener todas las notas de un alumno con nombre de materia
-router.get('/:id/notas', (req, res) => {
+router.get('/:id/notas', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -45,20 +47,20 @@ router.get('/:id/notas', (req, res) => {
     WHERE n.alumno_id = ?
   `;
 
-  connection.query(query, [id], (err, results) => {
-    if (err) {
-      console.error('❌ Error al obtener notas del alumno:', err);
-      return res.status(500).json({ error: 'Error al obtener notas del alumno' });
-    }
-    if (results.length === 0) {
+  try {
+    const [rows] = await connection.query(query, [id]);
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'No se encontraron notas para este alumno' });
     }
-    res.json(results);
-  });
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Error al obtener notas del alumno:', err);
+    res.status(500).json({ error: 'Error al obtener notas del alumno' });
+  }
 });
 
 // 📊 Promedio general de un alumno
-router.get('/:id/promedio', (req, res) => {
+router.get('/:id/promedio', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -70,20 +72,20 @@ router.get('/:id/promedio', (req, res) => {
     WHERE n.alumno_id = ?
   `;
 
-  connection.query(query, [id], (err, results) => {
-    if (err) {
-      console.error('❌ Error al calcular promedio:', err);
-      return res.status(500).json({ error: 'Error al calcular promedio' });
-    }
-    if (results.length === 0 || results[0].promedio_general === null) {
+  try {
+    const [rows] = await connection.query(query, [id]);
+    if (rows.length === 0 || rows[0].promedio_general === null) {
       return res.status(404).json({ error: 'No hay notas para este alumno' });
     }
-    res.json(results[0]);
-  });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('❌ Error al calcular promedio:', err);
+    res.status(500).json({ error: 'Error al calcular promedio' });
+  }
 });
 
 // 📚 Materias en las que un alumno no tiene notas cargadas
-router.get('/:id/materias-pendientes', (req, res) => {
+router.get('/:id/materias-pendientes', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -94,16 +96,16 @@ router.get('/:id/materias-pendientes', (req, res) => {
     WHERE n.id IS NULL
   `;
 
-  connection.query(query, [id], (err, results) => {
-    if (err) {
-      console.error('❌ Error al obtener materias pendientes:', err);
-      return res.status(500).json({ error: 'Error al obtener materias pendientes' });
-    }
-    if (results.length === 0) {
+  try {
+    const [rows] = await connection.query(query, [id]);
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'El alumno tiene notas en todas las materias' });
     }
-    res.json(results);
-  });
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Error al obtener materias pendientes:', err);
+    res.status(500).json({ error: 'Error al obtener materias pendientes' });
+  }
 });
 
 export default router;
