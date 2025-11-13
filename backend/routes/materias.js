@@ -68,15 +68,21 @@ router.put('/:id', passport.authenticate('jwt', { session: false }), async (req,
   }
 });
 
-// 🗑️ Eliminar materia
+// 🗑️ Eliminar materia (primero borra notas asociadas)
 router.delete('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
   try {
+    // 1️⃣ Borrar notas asociadas a la materia
+    await connection.query('DELETE FROM notas WHERE materia_id = ?', [id]);
+
+    // 2️⃣ Borrar la materia
     const [result] = await connection.query('DELETE FROM materias WHERE id = ?', [id]);
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Materia no encontrada' });
     }
-    res.json({ message: 'Materia eliminada correctamente' });
+
+    res.json({ message: 'Materia y sus notas eliminadas correctamente' });
   } catch (err) {
     console.error('❌ Error al eliminar materia:', err);
     res.status(500).json({ error: 'Error al eliminar materia' });
