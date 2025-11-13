@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function Login() {
+function Login({ setToken }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,9 +19,10 @@ function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('token', data.token); // Guardar JWT
+        localStorage.setItem('token', data.token);      // ✅ Guardar token
+        setToken(data.token);                            // ✅ Actualizar estado en App.jsx
         alert('✅ Sesión iniciada');
-        // Redirigir a /alumnos o donde quieras
+        navigate('/alumnos');                            // ✅ Redirigir automáticamente
       } else {
         alert(`❌ Error: ${data.error}`);
       }
@@ -50,7 +53,5 @@ function Login() {
     </form>
   );
 }
-
-
 
 export default Login;
