@@ -1,33 +1,50 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import connection from '../db.js';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta';
+const SALT_ROUNDS = 10;
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
+    // Buscar usuario por email
     const [rows] = await connection.query(
-      'SELECT * FROM usuarios WHERE email = ? AND password = ?',
-      [email, password]
+      'SELECT * FROM usuarios WHERE email = ?',
+      [email]
     );
 
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
+    const user = rows[0];
+
+    // Comparar contraseña con bcrypt
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Generar token JWT con expiración de 4 horas
     const token = jwt.sign(
-      { id: rows[0].id, email: rows[0].email },
-      process.env.JWT_SECRET || 'clave_secreta',
-      { expiresIn: '1h' }
+      { id: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '4h' }
     );
 
-    res.json({ token });
+    return res.json({ token });
   } catch (err) {
-    console.error('Error en el backend:', err);
-    res.status(500).json({ error: 'Error en el servidor' });
+    console.error('Error en /login:', err);
+    return res.status(500).json({ error: 'Error en el servidor' });
   }
 });
 
@@ -36,6 +53,10 @@ router.post('/register', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
     // Verificar si el usuario ya existe
     const [existing] = await connection.query(
       'SELECT * FROM usuarios WHERE email = ?',
@@ -46,10 +67,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'El usuario ya existe' });
     }
 
-    // Insertar nuevo usuario
+    // Hashear contraseña con bcrypt
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Insertar nuevo usuario con contraseña encriptada
     await connection.query(
       'INSERT INTO usuarios (email, password) VALUES (?, ?)',
-      [email, password]
+      [email, hashedPassword]
     );
 
     // Obtener el nuevo usuario
@@ -58,16 +82,23 @@ router.post('/register', async (req, res) => {
       [email]
     );
 
+    if (rows.length === 0) {
+      return res.status(500).json({ error: 'No se pudo recuperar el usuario' });
+    }
+
+    const user = rows[0];
+
+    // Generar token JWT con expiración de 4 horas
     const token = jwt.sign(
-      { id: rows[0].id, email: rows[0].email },
-      process.env.JWT_SECRET || 'clave_secreta',
-      { expiresIn: '1h' }
+      { id: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '4h' }
     );
 
-    res.json({ token });
+    return res.status(201).json({ token });
   } catch (err) {
-    console.error('Error en el backend:', err);
-    res.status(500).json({ error: 'Error en el servidor' });
+    console.error('Error en /register:', err);
+    return res.status(500).json({ error: 'Error en el servidor' });
   }
 });
 

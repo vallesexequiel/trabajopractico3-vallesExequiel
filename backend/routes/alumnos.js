@@ -1,11 +1,11 @@
 import express from 'express';
 import connection from '../db.js';
-import { verifyToken } from '../middleware/verifyToken.js';
+import passport from '../middleware/passport.js';
 
 const router = express.Router();
 
-// 🧾 Listar todos los alumnos (protegido con JWT)
-router.get('/', verifyToken, async (req, res) => {
+// 🧾 Listar todos los alumnos
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
   console.log('📥 Se recibió solicitud a /api/alumnos');
   try {
     const [rows] = await connection.query('SELECT * FROM alumnos');
@@ -17,7 +17,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // 🔍 Buscar alumno por ID
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await connection.query('SELECT * FROM alumnos WHERE id = ?', [id]);
@@ -31,8 +31,70 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ➕ Crear nuevo alumno
+router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { nombre, apellido } = req.body;
+
+  if (!nombre || !apellido) {
+    return res.status(400).json({ error: 'Nombre y apellido son obligatorios' });
+  }
+
+  try {
+    await connection.query('INSERT INTO alumnos (nombre, apellido) VALUES (?, ?)', [nombre, apellido]);
+    res.status(201).json({ message: 'Alumno creado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al crear alumno:', err);
+    res.status(500).json({ error: 'Error al crear alumno' });
+  }
+});
+
+// ✏️ Actualizar alumno
+router.put('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { id } = req.params;
+  const { nombre, apellido } = req.body;
+
+  if (!nombre || !apellido) {
+    return res.status(400).json({ error: 'Nombre y apellido son obligatorios' });
+  }
+
+  try {
+    const [result] = await connection.query(
+      'UPDATE alumnos SET nombre = ?, apellido = ? WHERE id = ?',
+      [nombre, apellido, id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+    res.json({ message: 'Alumno actualizado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al actualizar alumno:', err);
+    res.status(500).json({ error: 'Error al actualizar alumno' });
+  }
+});
+
+// 🗑️ Eliminar alumno (primero borra sus notas)
+router.delete('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 1️⃣ Borrar notas asociadas al alumno
+    await connection.query('DELETE FROM notas WHERE alumno_id = ?', [id]);
+
+    // 2️⃣ Borrar el alumno
+    const [result] = await connection.query('DELETE FROM alumnos WHERE id = ?', [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+
+    res.json({ message: 'Alumno y sus notas eliminados correctamente' });
+  } catch (err) {
+    console.error('❌ Error al eliminar alumno:', err);
+    res.status(500).json({ error: 'Error al eliminar alumno' });
+  }
+});
+
 // 📚 Obtener todas las notas de un alumno con nombre de materia
-router.get('/:id/notas', verifyToken, async (req, res) => {
+router.get('/:id/notas', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -60,7 +122,7 @@ router.get('/:id/notas', verifyToken, async (req, res) => {
 });
 
 // 📊 Promedio general de un alumno
-router.get('/:id/promedio', verifyToken, async (req, res) => {
+router.get('/:id/promedio', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -85,7 +147,7 @@ router.get('/:id/promedio', verifyToken, async (req, res) => {
 });
 
 // 📚 Materias en las que un alumno no tiene notas cargadas
-router.get('/:id/materias-pendientes', verifyToken, async (req, res) => {
+router.get('/:id/materias-pendientes', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
 
   const query = `

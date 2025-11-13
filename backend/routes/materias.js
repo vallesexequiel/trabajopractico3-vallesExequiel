@@ -1,11 +1,11 @@
 import express from 'express';
 import connection from '../db.js';
-import { verifyToken } from '../middleware/verifyToken.js';
+import passport from '../middleware/passport.js'; // ✅ Usamos Passport
 
 const router = express.Router();
 
-// 📥 Listar todas las materias (protegido con JWT)
-router.get('/', verifyToken, async (req, res) => {
+// 📥 Listar todas las materias
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
   console.log('📥 Se recibió solicitud a /api/materias');
   try {
     const [rows] = await connection.query('SELECT * FROM materias');
@@ -17,7 +17,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // 🔍 Obtener una materia por ID
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await connection.query('SELECT * FROM materias WHERE id = ?', [id]);
@@ -31,8 +31,60 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ➕ Crear nueva materia
+router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) {
+    return res.status(400).json({ error: 'El nombre es obligatorio' });
+  }
+
+  try {
+    await connection.query('INSERT INTO materias (nombre) VALUES (?)', [nombre]);
+    res.status(201).json({ message: 'Materia creada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al crear materia:', err);
+    res.status(500).json({ error: 'Error al crear materia' });
+  }
+});
+
+// ✏️ Actualizar materia
+router.put('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { id } = req.params;
+  const { nombre } = req.body;
+
+  if (!nombre) {
+    return res.status(400).json({ error: 'El nombre es obligatorio' });
+  }
+
+  try {
+    const [result] = await connection.query('UPDATE materias SET nombre = ? WHERE id = ?', [nombre, id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+    res.json({ message: 'Materia actualizada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al actualizar materia:', err);
+    res.status(500).json({ error: 'Error al actualizar materia' });
+  }
+});
+
+// 🗑️ Eliminar materia
+router.delete('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await connection.query('DELETE FROM materias WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Materia no encontrada' });
+    }
+    res.json({ message: 'Materia eliminada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al eliminar materia:', err);
+    res.status(500).json({ error: 'Error al eliminar materia' });
+  }
+});
+
 // 👥 Alumnos con notas en una materia específica
-router.get('/:id/alumnos', verifyToken, async (req, res) => {
+router.get('/:id/alumnos', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
 
   const query = `
@@ -58,7 +110,7 @@ router.get('/:id/alumnos', verifyToken, async (req, res) => {
 });
 
 // 🚫 Alumnos que NO tienen notas en una materia específica
-router.get('/:id/alumnos-pendientes', verifyToken, async (req, res) => {
+router.get('/:id/alumnos-pendientes', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
 
   const query = `

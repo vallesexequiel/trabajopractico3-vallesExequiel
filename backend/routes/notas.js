@@ -1,11 +1,11 @@
 import express from 'express';
 import connection from '../db.js';
-import { verifyToken } from '../middleware/verifyToken.js';
+import passport from '../middleware/passport.js'; // ✅ Usamos Passport
 
 const router = express.Router();
 
-// 📥 Listar todas las notas (protegido con JWT)
-router.get('/', verifyToken, async (req, res) => {
+// 📥 Listar todas las notas
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
   console.log('📥 Se recibió solicitud a /api/notas');
   try {
     const [rows] = await connection.query('SELECT * FROM notas');
@@ -17,7 +17,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // 🔍 Buscar nota por ID
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await connection.query('SELECT * FROM notas WHERE id = ?', [id]);
@@ -32,20 +32,24 @@ router.get('/:id', verifyToken, async (req, res) => {
 });
 
 // 📝 Crear nuevas notas
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { alumno_id, materia_id, nota1, nota2, nota3 } = req.body;
 
   if (!alumno_id || !materia_id || nota1 == null || nota2 == null || nota3 == null) {
     return res.status(400).json({ error: 'Faltan datos para registrar las notas' });
   }
 
-  const query = `
-    INSERT INTO notas (alumno_id, materia_id, nota1, nota2, nota3)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+  // Validar rango de notas
+  const notas = [nota1, nota2, nota3];
+  if (notas.some(n => n < 0 || n > 10)) {
+    return res.status(400).json({ error: 'Las notas deben estar entre 0 y 10' });
+  }
 
   try {
-    const [result] = await connection.query(query, [alumno_id, materia_id, nota1, nota2, nota3]);
+    const [result] = await connection.query(
+      'INSERT INTO notas (alumno_id, materia_id, nota1, nota2, nota3) VALUES (?, ?, ?, ?, ?)',
+      [alumno_id, materia_id, nota1, nota2, nota3]
+    );
     res.status(201).json({ mensaje: 'Notas registradas correctamente', id: result.insertId });
   } catch (err) {
     console.error('❌ Error al insertar notas:', err);
@@ -54,7 +58,7 @@ router.post('/', verifyToken, async (req, res) => {
 });
 
 // ✏️ Actualizar notas existentes por ID
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
   const { nota1, nota2, nota3 } = req.body;
 
@@ -62,14 +66,17 @@ router.put('/:id', verifyToken, async (req, res) => {
     return res.status(400).json({ error: 'Faltan datos para actualizar las notas' });
   }
 
-  const query = `
-    UPDATE notas
-    SET nota1 = ?, nota2 = ?, nota3 = ?
-    WHERE id = ?
-  `;
+  // Validar rango de notas
+  const notas = [nota1, nota2, nota3];
+  if (notas.some(n => n < 0 || n > 10)) {
+    return res.status(400).json({ error: 'Las notas deben estar entre 0 y 10' });
+  }
 
   try {
-    const [result] = await connection.query(query, [nota1, nota2, nota3, id]);
+    const [result] = await connection.query(
+      'UPDATE notas SET nota1 = ?, nota2 = ?, nota3 = ? WHERE id = ?',
+      [nota1, nota2, nota3, id]
+    );
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Registro de notas no encontrado' });
     }
@@ -81,12 +88,10 @@ router.put('/:id', verifyToken, async (req, res) => {
 });
 
 // 🗑️ Eliminar notas por ID
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
   const { id } = req.params;
-  const query = 'DELETE FROM notas WHERE id = ?';
-
   try {
-    const [result] = await connection.query(query, [id]);
+    const [result] = await connection.query('DELETE FROM notas WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Registro de notas no encontrado' });
     }
@@ -94,6 +99,24 @@ router.delete('/:id', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('❌ Error al eliminar notas:', err);
     res.status(500).json({ error: 'Error al eliminar notas' });
+  }
+});
+
+// 📊 Promedio de notas por alumno y materia
+router.get('/:alumnoId/:materiaId/promedio', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const { alumnoId, materiaId } = req.params;
+  try {
+    const [rows] = await connection.query(
+      'SELECT ROUND((nota1 + nota2 + nota3) / 3, 2) AS promedio FROM notas WHERE alumno_id = ? AND materia_id = ?',
+      [alumnoId, materiaId]
+    );
+    if (rows.length === 0 || rows[0].promedio === null) {
+      return res.status(404).json({ error: 'No hay notas para calcular promedio' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('❌ Error al calcular promedio:', err);
+    res.status(500).json({ error: 'Error al calcular promedio' });
   }
 });
 

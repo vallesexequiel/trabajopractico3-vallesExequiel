@@ -6,6 +6,7 @@ import alumnosRoutes from './routes/alumnos.js';
 import materiasRoutes from './routes/materias.js';
 import notasRoutes from './routes/notas.js';
 import authRoutes from './routes/auth.js';
+import passport from './middleware/passport.js'; // ✅ Importamos Passport
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3001;
 // ✅ Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(passport.initialize()); // ✅ Inicializamos Passport
 
 // ✅ Rutas
 app.use('/api/alumnos', alumnosRoutes);
