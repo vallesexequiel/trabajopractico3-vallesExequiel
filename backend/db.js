@@ -10,6 +10,6 @@ const connection = await mysql.createConnection({
   database: process.env.DB_NAME || 'gestion_alumnos',
 });
 
-console.log('✅ Conexión exitosa a MySQL');
+console.log(' Conexión exitosa a MySQL');
 
 export default connection;
