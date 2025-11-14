@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// comente todo para ir desarrollando mejor en todos lados tanto como el backend y el frontend
+
+
+
 function Login({ setToken }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,16 +23,16 @@ function Login({ setToken }) {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('token', data.token);      // ✅ Guardar token
-        setToken(data.token);                            // ✅ Actualizar estado en App.jsx
-        alert('✅ Sesión iniciada');
-        navigate('/alumnos');                            // ✅ Redirigir automáticamente
+        localStorage.setItem('token', data.token);      //  Guardar token
+        setToken(data.token);                            // Actualizar estado en App.jsx
+        alert(' Sesión iniciada');
+        navigate('/alumnos');                            //  Redirigir automáticamente
       } else {
-        alert(`❌ Error: ${data.error}`);
+        alert(` Error: ${data.error}`);
       }
     } catch (err) {
       console.error('Error al iniciar sesión:', err);
-      alert('❌ No se pudo conectar con el servidor');
+      alert(' No se pudo conectar con el servidor');
     }
   };
 

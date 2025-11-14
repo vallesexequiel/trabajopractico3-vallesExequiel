@@ -13,7 +13,7 @@ function Notas() {
 
   const token = localStorage.getItem('token');
 
-  // 📥 Obtener todas las notas
+  //  Obtener todas las notas
   const fetchNotas = async () => {
     if (!token) {
       setError('No hay token, inicia sesión primero');
@@ -36,7 +36,7 @@ function Notas() {
       const data = await res.json();
       setNotas(data);
     } catch (err) {
-      console.error('❌ Error al conectar con el backend:', err);
+      console.error(' Error al conectar con el backend:', err);
       setError('No se pudo conectar con el servidor');
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ function Notas() {
     fetchNotas();
   }, []);
 
-  // ➕ Crear o ✏️ Editar notas
+  // ➕ Crear o  Editar notas
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!alumnoId || !materiaId || nota1 === '' || nota2 === '' || nota3 === '') {
@@ -93,12 +93,12 @@ function Notas() {
       setEditId(null);
       fetchNotas();
     } catch (err) {
-      console.error('❌ Error al guardar notas:', err);
+      console.error(' Error al guardar notas:', err);
       setError('No se pudo guardar las notas');
     }
   };
 
-  // 🗑️ Eliminar notas
+  //  Eliminar notas
   const handleDelete = async (id) => {
     if (!window.confirm('¿Seguro que quieres eliminar estas notas?')) return;
 
@@ -118,7 +118,7 @@ function Notas() {
       alert(data.mensaje || 'Notas eliminadas');
       fetchNotas();
     } catch (err) {
-      console.error('❌ Error al eliminar notas:', err);
+      console.error(' Error al eliminar notas:', err);
       setError('No se pudo eliminar las notas');
     }
   };
@@ -130,7 +130,7 @@ function Notas() {
       {loading && <p>Cargando notas...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {/* ➕ Formulario de alta/edición */}
+      {/* Formulario de alta/edición */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <input
           type="number"
@@ -170,7 +170,7 @@ function Notas() {
         )}
       </form>
 
-      {/* 📋 Tabla de notas */}
+      {/*  Tabla de notas */}
       {!loading && notas.length > 0 ? (
         <table border="1" cellPadding="8">
           <thead>

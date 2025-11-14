@@ -9,7 +9,7 @@ function Materias() {
 
   const token = localStorage.getItem('token');
 
-  // 📥 Obtener todas las materias
+  //  Obtener todas las materias
   const fetchMaterias = async () => {
     if (!token) {
       setError('No hay token, inicia sesión primero');
@@ -32,7 +32,7 @@ function Materias() {
       const data = await res.json();
       setMaterias(data);
     } catch (err) {
-      console.error('❌ Error al conectar con el backend:', err);
+      console.error(' Error al conectar con el backend:', err);
       setError('No se pudo conectar con el servidor');
     } finally {
       setLoading(false);
@@ -43,7 +43,7 @@ function Materias() {
     fetchMaterias();
   }, []);
 
-  // ➕ Crear o ✏️ Editar materia
+  // ➕ Crear o  Editar materia
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre) {
@@ -79,12 +79,12 @@ function Materias() {
       setEditId(null);
       fetchMaterias();
     } catch (err) {
-      console.error('❌ Error al guardar materia:', err);
+      console.error(' Error al guardar materia:', err);
       setError('No se pudo guardar la materia');
     }
   };
 
-  // 🗑️ Eliminar materia
+  //  Eliminar materia
   const handleDelete = async (id) => {
     if (!window.confirm('¿Seguro que quieres eliminar esta materia?')) return;
 
@@ -104,7 +104,7 @@ function Materias() {
       alert(data.message || 'Materia eliminada');
       fetchMaterias();
     } catch (err) {
-      console.error('❌ Error al eliminar materia:', err);
+      console.error(' Error al eliminar materia:', err);
       setError('No se pudo eliminar la materia');
     }
   };
@@ -132,7 +132,7 @@ function Materias() {
         )}
       </form>
 
-      {/* 📋 Tabla de materias */}
+      {/*  Tabla de materias */}
       {!loading && materias.length > 0 ? (
         <table border="1" cellPadding="8">
           <thead>

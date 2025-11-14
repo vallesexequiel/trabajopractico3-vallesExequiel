@@ -29,7 +29,7 @@ function AppRoutes() {
 
   return (
     <>
-      {/* ✅ Navbar dinámico */}
+      {/*  Navbar dinámico */}
       <nav style={{ padding: '10px', background: '#eee' }}>
         {token ? (
           <>
@@ -51,12 +51,12 @@ function AppRoutes() {
         )}
       </nav>
 
-      {/* ✅ Rutas */}
+      {/* Rutas */}
       <Routes>
         <Route path="/" element={<Login setToken={setToken} />} />
         <Route path="/register" element={<Register setToken={setToken} />} />
 
-        {/* 🔒 Rutas protegidas */}
+        {/*  Rutas protegidas */}
         <Route path="/alumnos" element={
           <ProtectedRoute token={token}>
             <Alumnos />

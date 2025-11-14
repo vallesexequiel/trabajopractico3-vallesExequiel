@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import AlumnoDetalle from './AlumnoDetalle'; // 👈 Asegurate que esté en src/pages/
+import AlumnoDetalle from './AlumnoDetalle'; 
 
 function Alumnos() {
   const [alumnos, setAlumnos] = useState([]);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [editId, setEditId] = useState(null);
-  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null); // 👁️ Nuevo estado
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +34,7 @@ function Alumnos() {
       const data = await res.json();
       setAlumnos(data);
     } catch (err) {
-      console.error('❌ Error al conectar con el backend:', err);
+      console.error(' Error al conectar con el backend:', err);
       setError('No se pudo conectar con el servidor');
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ function Alumnos() {
       setError('');
       fetchAlumnos();
     } catch (err) {
-      console.error('❌ Error al guardar alumno:', err);
+      console.error(' Error al guardar alumno:', err);
       setError('No se pudo guardar el alumno');
     }
   };
@@ -105,7 +105,7 @@ function Alumnos() {
     if (!window.confirm('¿Seguro que quieres eliminar este alumno?')) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/api/alumnos/${id}`, {
+      const res = await fetch(`http://localhost:3001/api/alumnos/${Number(id)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -120,16 +120,16 @@ function Alumnos() {
       alert(data.message || 'Alumno eliminado');
       fetchAlumnos();
     } catch (err) {
-      console.error('❌ Error al eliminar alumno:', err);
+      console.error(' Error al eliminar alumno:', err);
       setError('No se pudo eliminar el alumno');
     }
   };
 
-  // 👁️ Mostrar detalle si hay alumno seleccionado
+  //  Mostrar detalle si hay alumno seleccionado
   if (alumnoSeleccionado) {
     return (
       <AlumnoDetalle
-        alumnoId={alumnoSeleccionado}
+        alumnoId={Number(alumnoSeleccionado)} // 👈 Convertimos a número
         onBack={() => setAlumnoSeleccionado(null)}
       />
     );
@@ -157,12 +157,15 @@ function Alumnos() {
         />
         <button type="submit">{editId ? 'Actualizar' : 'Agregar'}</button>
         {editId && (
-          <button type="button" onClick={() => {
-            setEditId(null);
-            setNombre('');
-            setApellido('');
-            setError('');
-          }}>
+          <button
+            type="button"
+            onClick={() => {
+              setEditId(null);
+              setNombre('');
+              setApellido('');
+              setError('');
+            }}
+          >
             Cancelar
           </button>
         )}
@@ -185,16 +188,20 @@ function Alumnos() {
                 <td>{alumno.nombre}</td>
                 <td>{alumno.apellido}</td>
                 <td>
-                  <button onClick={() => {
-                    setEditId(alumno.id);
-                    setNombre(alumno.nombre);
-                    setApellido(alumno.apellido);
-                    setError('');
-                  }}>
+                  <button
+                    onClick={() => {
+                      setEditId(Number(alumno.id)); // Convertimos a número
+                      setNombre(alumno.nombre);
+                      setApellido(alumno.apellido);
+                      setError('');
+                    }}
+                  >
                     ✏️ Editar
                   </button>
                   <button onClick={() => handleDelete(alumno.id)}>🗑️ Eliminar</button>
-                  <button onClick={() => setAlumnoSeleccionado(alumno.id)}>👁️ Ver detalle</button>
+                  <button onClick={() => setAlumnoSeleccionado(Number(alumno.id))}>
+                    👁️ Ver detalle
+                  </button>
                 </td>
               </tr>
             ))}

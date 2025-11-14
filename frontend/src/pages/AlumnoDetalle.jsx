@@ -10,26 +10,56 @@ function AlumnoDetalle({ alumnoId, onBack }) {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+    const idNum = Number(alumnoId);
+    
+
+    // Guard: id inválido
+    if (!Number.isInteger(idNum) || idNum <= 0) {
+      setError('ID de alumno inválido');
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
+      setError('');
+      setLoading(true);
       try {
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 📋 Notas por materia
-        const resNotas = await fetch(`http://localhost:3001/api/alumnos/${alumnoId}/notas`, { headers });
-        if (resNotas.ok) setNotas(await resNotas.json());
+        //  Notas por materia
+        const resNotas = await fetch(`http://localhost:3001/api/alumnos/${idNum}/notas`, { headers });
+        if (resNotas.ok) {
+          const dataNotas = await resNotas.json();
+          setNotas(dataNotas);
+        } else {
+          const errBody = await resNotas.json().catch(() => ({}));
+          console.error(' Error en /notas:', resNotas.status, errBody);
+          setNotas([]); // estado consistente
+        }
 
-        // 📊 Promedio general
-        const resProm = await fetch(`http://localhost:3001/api/alumnos/${alumnoId}/promedio`, { headers });
+        //  Promedio general
+        const resProm = await fetch(`http://localhost:3001/api/alumnos/${idNum}/promedio`, { headers });
         if (resProm.ok) {
           const data = await resProm.json();
           setPromedio(data.promedio_general);
+        } else {
+          const errBody = await resProm.json().catch(() => ({}));
+          console.error(' Error en /promedio:', resProm.status, errBody);
+          setPromedio(null);
         }
 
-        // 📚 Materias pendientes
-        const resPend = await fetch(`http://localhost:3001/api/alumnos/${alumnoId}/materias-pendientes`, { headers });
-        if (resPend.ok) setPendientes(await resPend.json());
+        // Materias pendientes
+        const resPend = await fetch(`http://localhost:3001/api/alumnos/${idNum}/materias-pendientes`, { headers });
+        if (resPend.ok) {
+          const dataPend = await resPend.json();
+          setPendientes(dataPend);
+        } else {
+          const errBody = await resPend.json().catch(() => ({}));
+          console.error(' Error en /materias-pendientes:', resPend.status, errBody);
+          setPendientes([]);
+        }
       } catch (err) {
-        console.error('❌ Error al obtener detalle del alumno:', err);
+        console.error(' Error al obtener detalle del alumno:', err);
         setError('No se pudo cargar el detalle del alumno');
       } finally {
         setLoading(false);
@@ -45,7 +75,7 @@ function AlumnoDetalle({ alumnoId, onBack }) {
       {loading && <p>Cargando...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {/* 📋 Notas */}
+      {/*  Notas */}
       <h3>Notas por materia</h3>
       {notas.length > 0 ? (
         <table border="1" cellPadding="8">
@@ -74,11 +104,11 @@ function AlumnoDetalle({ alumnoId, onBack }) {
         <p>No hay notas cargadas</p>
       )}
 
-      {/* 📊 Promedio general */}
+      {/*  Promedio general */}
       <h3>Promedio general</h3>
       {promedio !== null ? <p>{promedio}</p> : <p>No hay promedio disponible</p>}
 
-      {/* 📚 Materias pendientes */}
+      {/*  Materias pendientes */}
       <h3>Materias pendientes</h3>
       {pendientes.length > 0 ? (
         <ul>

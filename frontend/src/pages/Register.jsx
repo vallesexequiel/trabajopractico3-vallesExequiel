@@ -16,7 +16,7 @@ function Register({ setToken }) {
         body: JSON.stringify({ email, password }),
       });
 
-      // ✅ Parseamos la respuesta directamente como JSON
+      //  Parseamos la respuesta directamente como JSON
       const data = await res.json();
 
       if (res.ok && data.token) {
