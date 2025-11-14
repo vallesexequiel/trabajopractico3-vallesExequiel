@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
+import AlumnoDetalle from './AlumnoDetalle'; // 👈 Asegurate que esté en src/pages/
 
 function Alumnos() {
   const [alumnos, setAlumnos] = useState([]);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [editId, setEditId] = useState(null);
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null); // 👁️ Nuevo estado
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem('token');
 
-  // 📥 Obtener alumnos
   const fetchAlumnos = async () => {
     if (!token) {
       setError('No hay token, inicia sesión primero');
@@ -44,7 +45,6 @@ function Alumnos() {
     fetchAlumnos();
   }, []);
 
-  // ✅ Validaciones frontend
   const validarCampos = () => {
     if (!nombre.trim() || !apellido.trim()) {
       setError('Nombre y apellido son obligatorios');
@@ -62,7 +62,6 @@ function Alumnos() {
     return true;
   };
 
-  // ➕ Crear o ✏️ Editar alumno
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validarCampos()) return;
@@ -102,7 +101,6 @@ function Alumnos() {
     }
   };
 
-  // 🗑️ Eliminar alumno
   const handleDelete = async (id) => {
     if (!window.confirm('¿Seguro que quieres eliminar este alumno?')) return;
 
@@ -127,6 +125,16 @@ function Alumnos() {
     }
   };
 
+  // 👁️ Mostrar detalle si hay alumno seleccionado
+  if (alumnoSeleccionado) {
+    return (
+      <AlumnoDetalle
+        alumnoId={alumnoSeleccionado}
+        onBack={() => setAlumnoSeleccionado(null)}
+      />
+    );
+  }
+
   return (
     <div>
       <h2>👨‍🎓 Gestión de Alumnos</h2>
@@ -134,7 +142,6 @@ function Alumnos() {
       {loading && <p>Cargando alumnos...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {/* ➕ Formulario */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <input
           type="text"
@@ -161,7 +168,6 @@ function Alumnos() {
         )}
       </form>
 
-      {/* 📋 Tabla */}
       {!loading && alumnos.length > 0 ? (
         <table border="1" cellPadding="8">
           <thead>
@@ -188,6 +194,7 @@ function Alumnos() {
                     ✏️ Editar
                   </button>
                   <button onClick={() => handleDelete(alumno.id)}>🗑️ Eliminar</button>
+                  <button onClick={() => setAlumnoSeleccionado(alumno.id)}>👁️ Ver detalle</button>
                 </td>
               </tr>
             ))}
