@@ -9,7 +9,7 @@ POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "email": "test2@correo.com",
+  "email": "test@correo.com",
   "password": "123456"
 }
 
@@ -18,13 +18,13 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "test2@correo.com",
+  "email": "test@correo.com",
   "password": "123456"
 }
 
 ### Obtener todos los alumnos (requiere token)
 GET {{baseUrl}}/api/alumnos
-Authorization: Bearer {{t  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImVtYWlsIjoidGVzdDJAY29ycmVvLmNvbSIsImlhdCI6MTc2MzA4MDI5NiwiZXhwIjoxNzYzMDk0Njk2fQ.ovY8YI33fX8whM_4VKnTzIncZ9uiKL_URtXZN44ueTc"}}
+Authorization: Bearer {{token}}
 
 ### Crear alumno (requiere token)
 POST {{baseUrl}}/api/alumnos
